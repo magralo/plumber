@@ -10,6 +10,7 @@ function(int) {
 }
 
 
+
 #* Determine if he either loves you or not (stop the daisy masasacre)
 #* @serializer text
 #* @get /lovemenot
