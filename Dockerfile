@@ -15,11 +15,12 @@ RUN Rscript -e 'install.packages(c("tidyr"), repos = c("CRAN" = Sys.getenv("CRAN
 RUN Rscript -e 'install.packages(c("lubridate"), repos = c("CRAN" = Sys.getenv("CRAN_REPO")))'
 
 RUN groupadd -r plumber && useradd --no-log-init -r -g plumber plumber
-
-ADD plumber.R /home/plumber/plumber.R
-ADD entrypoint.R /home/plumber/entrypoint.R
-
 WORKDIR /home/plumber
+
+ADD plumber.R plumber.R
+ADD entrypoint.R entrypoint.R
+
+
 USER plumber
 
 CMD ["Rscript","entrypoint.R"]
