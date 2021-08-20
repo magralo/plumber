@@ -1,0 +1,110 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Build and push images
+
+on:
+  push:
+    branches:
+    - development
+    - main
+
+env:
+  PROJECT_ID: lateral-vision-320622
+  IMAGESER: plumberimage
+  SERVICEDEV: plumberdev
+  REGION: us-central1
+  SERVICEMAIN: plumber
+
+  
+jobs:
+  setup-build-publish:
+    name: pytest, build, publish
+    runs-on: ubuntu-latest
+
+    steps:
+
+
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m spacy download en_core_web_lg
+
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run Pytest 
+      run: |
+        pytest
+
+
+
+    - uses: google-github-actions/setup-gcloud@master
+      with:
+        version: '290.0.1'
+        project_id: lateral-vision-320622
+        service_account_key: ${{ secrets.GCP_KEY }}
+        export_default_credentials: true
+    
+   
+    - run: |-
+        gcloud --quiet auth configure-docker
+    
+    - name: Build
+      run: |-
+        docker build \
+          --tag "gcr.io/$PROJECT_ID/$IMAGESER:${GITHUB_REF##*/}" \
+          --build-arg GITHUB_SHA="$GITHUB_SHA" \
+          --build-arg GITHUB_REF="$GITHUB_REF" \
+          .
+    # Push the Docker image to Google Container Registry
+    - name: Publish
+      run: |-
+        docker push "gcr.io/$PROJECT_ID/$IMAGESER:${GITHUB_REF##*/}"
+    
+
+
+    - name: Deploy to Cloud Run on main
+      if: ${{ github.ref == 'refs/heads/main'}}
+      run: |-
+        gcloud run deploy $SERVICEMAIN \
+          --region $REGION \
+          --image gcr.io/$PROJECT_ID/$IMAGESER:${GITHUB_REF##*/} \
+          --platform managed \
+          --allow-unauthenticated \
+          --memory 1Gi 
+
+    - name: Deploy to Cloud Run on development 
+      if: ${{ github.ref != 'refs/heads/main'}}
+      run: |-
+        gcloud run deploy $SERVICEDEV \
+          --region $REGION \
+          --image gcr.io/$PROJECT_ID/$IMAGESER:${GITHUB_REF##*/} \
+          --platform managed \
+          --allow-unauthenticated \
+          --memory 1Gi 
