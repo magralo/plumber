@@ -17,5 +17,5 @@ Why use github actions? Free CI/CD
 
 This API has 2 diferent endpoints :
 
-1. /parity is an example... tell us if the given number is pair or odd. example: https://plumberdev-y5z2fvs4lq-uc.a.run.app/parity?int=19
-2. /lovemenot... i build this to tackle a real word problem!! I saw so many daisys died in hands of terrible human beings that killed them just to answer the question: Does my (s)he loves me? Example: https://plumberdev-y5z2fvs4lq-uc.a.run.app/lovemenot
+1. /parity is an example... tell us if the given number is pair or odd. example: https://plumber-y5z2fvs4lq-uc.a.run.app/parity?int=19
+2. /lovemenot... i build this to tackle a real word problem!! I saw so many daisys died in hands of terrible human beings that killed them just to answer the question: Does my (s)he loves me? Example: https://plumber-y5z2fvs4lq-uc.a.run.app/lovemenot
